@@ -1,0 +1,41 @@
+version: "3.7"
+services:
+  db:
+    image: postgres:16
+    container_name: db_app
+    environment:
+      POSTGRES_PASSWORD: 123
+    command: -p 1221
+    expose:
+      - 1221
+    env_file:
+      - .env-non-dev
+    volumes:
+      - postgres-data:/var/lib/postgresql/data  
+
+
+  redis:
+    image: redis:7
+    container_name: redis
+    command: --port 5742
+    expose: 
+      - 5742
+
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - .env-non-dev
+    container_name: fastapi_app  
+    command: ["sh", "-c", "alembic upgrade head && gunicorn src.main:app --workers 4 --worker-class uvicorn.workers.UvicornWorker --bind=0.0.0.0:8000"]
+    ports:
+      - 9999:8000    
+    depends_on:
+      - db
+      - redis
+
+
+volumes:
+  postgres-data:      
